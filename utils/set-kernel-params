@@ -22,6 +22,11 @@ echo "Adding a kernel parameter to prevent bluescreens when a VM does MSR reads 
 addKernelParam "kvm.ignore_msrs=1"
 echo "Adding a kernel parameter to tell dracut to load vfio-pci first..."
 addKernelParam "rd.driver.pre=vfio-pci" # tell dracut to load vfio-pci first
+echo "Adding a kernel parameter to enable hugepage support..."
+addKernelParam "default_hugepagesz=1G"
+addKernelParam "hugepagesz=1G"
+addKernelParam "hugepages=0"
+addKernelParam "transparent_hugepage=never"
 
 # echo "Adding a kernel parameter to add skylake support..."
 # addKernelParam "i915.preliminary_hw_support=1" # add skylake support; probably only necessary with older kernels
