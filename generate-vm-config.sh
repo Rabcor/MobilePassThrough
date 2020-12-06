@@ -51,7 +51,7 @@ interactiveCfg "What should the name of the VM be?" VM_NAME
 interactiveCfg "Where to save the VM drive image?" DRIVE_IMG
 interactiveCfg "How big should the VM drive image be?" VM_DISK_SIZE
 interactiveCfg "How many CPU cores should the VM get?" CPU_CORE_COUNT
-interactiveCfg "How much RAM should the VM get?" RAM_SIZE
+interactiveCfg "How much RAM should the VM get?(In GigaBytes)" RAM_SIZE
 interactiveCfg "Path to your Windows installation iso. (If it doesn't exist it will be downloaded automatically.)" INSTALL_IMG
 interactiveCfg "Path to a dGPU ROM. (Optional)" DGPU_ROM
 interactiveCfg "Path to a folder to share with the VM via SMB. (Optional)" SMB_SHARE_FOLDER
