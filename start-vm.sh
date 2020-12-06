@@ -25,6 +25,9 @@ else
     exit
 fi
 
+#Enable Hugepages
+sudo sysctl -w vm.nr_hugepages=${RAM_SIZE}
+
 if [[ ${DRIVE_IMG} == /dev/* ]] ; then
     echo "> Using a physical OS drive..."
     OS_DRIVE_PARAM="-drive file=${DRIVE_IMG},if=virtio  -snapshot"
@@ -61,7 +64,7 @@ echo "> Retrieving and parsing DGPU IDs..."
 DGPU_IDS=$(sudo ${OPTIRUN_PREFIX}lspci -n -s "${DGPU_PCI_ADDRESS}" | grep -oP "\w+:\w+" | tail -1)
 DGPU_VENDOR_ID=$(echo "${DGPU_IDS}" | cut -d ":" -f1)
 DGPU_DEVICE_ID=$(echo "${DGPU_IDS}" | cut -d ":" -f2)
-DGPU_SS_IDS=$(optirun lspci -vnn -d "${DGPU_IDS}" | grep "Subsystem:" | grep -oP "\w+:\w+")
+DGPU_SS_IDS=$(${OPTIRUN_PREFIX} lspci -vnn -s "${DGPU_PCI_ADDRESS}" | grep "Subsystem:" | grep -oP "\w+:\w+")
 DGPU_SS_VENDOR_ID=$(echo "${DGPU_SS_IDS}" | cut -d ":" -f1)
 DGPU_SS_DEVICE_ID=$(echo "${DGPU_SS_IDS}" | cut -d ":" -f2)
 
@@ -121,7 +124,7 @@ fi
 if [ "$DGPU_PASSTHROUGH" = true ] ; then
     echo "> Using dGPU passthrough..."
     echo "> Unbinding dGPU from ${HOST_DGPU_DRIVER} driver..."
-    sudo bash -c "echo '0000:${DGPU_PCI_ADDRESS}' '/sys/bus/pci/devices/0000:${DGPU_PCI_ADDRESS}/driver/unbind'"
+    sudo bash -c "echo '0000:${DGPU_PCI_ADDRESS}' > '/sys/bus/pci/devices/0000:${DGPU_PCI_ADDRESS}/driver/unbind'"
     echo "> Binding dGPU to VFIO driver..."
     sudo bash -c "echo '${DGPU_VENDOR_ID} ${DGPU_DEVICE_ID}' > '/sys/bus/pci/drivers/vfio-pci/new_id'"
     #sudo bash -c "echo 'options vfio-pci ids=${DGPU_VENDOR_ID}:${DGPU_DEVICE_ID}' > '/etc/modprobe.d/vfio.conf'"
@@ -216,6 +219,7 @@ sudo qemu-system-x86_64 \
   -cpu host,kvm=off,hv_vapic,hv_relaxed,hv_spinlocks=0x1fff,hv_time,hv_vendor_id=12alphanum \
   -smp ${CPU_CORE_COUNT} \
   -m ${RAM_SIZE} \
+  -mem-path /dev/hugepages
   -mem-prealloc \
   -rtc clock=host,base=localtime \
   -nographic \
@@ -250,6 +254,10 @@ sudo qemu-system-x86_64 \
   ${DMA_BUF_DISPLAY_PARAM}
 
 # This gets executed when the vm exits
+
+#Disable hugepages
+sudo sysctl -w vm.nr_hugepages=0
+
 echo "> Binding dGPU back to ${HOST_DGPU_DRIVER} driver..."
 if [ "$DGPU_PASSTHROUGH" = true ] ; then
     sudo bash -c "echo '0000:${DGPU_PCI_ADDRESS}' > '/sys/bus/pci/drivers/vfio-pci/0000:${DGPU_PCI_ADDRESS}/driver/unbind'"
